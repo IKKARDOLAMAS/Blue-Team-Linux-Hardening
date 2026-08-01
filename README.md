@@ -50,3 +50,17 @@ La configuración por defecto de los servidores web expone metadatos que facilit
 
 ---
 **Enfoque:** Arquitectura de Seguridad, Hardening de Sistemas y Defensa Activa (Blue Team).
+
+## 🚪 4. Fortificación de Accesos Remotos (SSH)
+
+El servicio SSH es el vector principal de los ataques de fuerza bruta y movimientos laterales (Pivoting). Se aplicó una política estricta de "Denegación por Defecto" editando el archivo `/etc/ssh/sshd_config` para neutralizar intrusiones automatizadas.
+
+### 🛡️ Políticas de Autenticación (Zero Trust)
+* **`PermitRootLogin no`**: Bloquea el acceso directo al superusuario, forzando a los administradores a usar cuentas de bajos privilegios para luego escalar (Auditoría limpia).
+* **`PasswordAuthentication no`**: Neutraliza el 100% de los ataques de fuerza bruta basados en diccionarios. El acceso solo es posible mediante intercambio de claves criptográficas (SSH Keys).
+* **`MaxAuthTries 3`**: Desconecta automáticamente al cliente tras 3 intentos fallidos de validación de clave.
+
+### 🚫 Prevención de Movimientos Laterales
+* **`X11Forwarding no`**: Impide que un atacante con acceso comprometido utilice la interfaz gráfica del servidor para saltar hacia otras máquinas en la red interna.
+
+**Validación de despliegue:** Se auditó la configuración activa en memoria RAM mediante el comando `sshd -T` para garantizar que no existieran conflictos con las configuraciones por defecto de OpenSSH.
