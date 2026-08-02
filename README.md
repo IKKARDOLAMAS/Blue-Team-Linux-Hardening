@@ -64,3 +64,16 @@ El servicio SSH es el vector principal de los ataques de fuerza bruta y movimien
 * **`X11Forwarding no`**: Impide que un atacante con acceso comprometido utilice la interfaz gráfica del servidor para saltar hacia otras máquinas en la red interna.
 
 **Validación de despliegue:** Se auditó la configuración activa en memoria RAM mediante el comando `sshd -T` para garantizar que no existieran conflictos con las configuraciones por defecto de OpenSSH.
+
+## 🛡️ 5. Defensa Activa (IPS) con Fail2ban
+
+Para complementar el hardening de accesos remotos, se implementó **Fail2ban** como sistema de prevención para detectar y bloquear automáticamente atacantes, mitigando riesgos de fuerza bruta continuada y escaneo de puertos.
+
+### ⚙️ Configuración de la Cárcel (Jail) SSH
+Se creó una regla de tolerancia cero en `/etc/fail2ban/jail.d/sshd.local` para no alterar los archivos base del sistema, aplicando las siguientes directivas:
+* **`port = ssh`**: Monitorización constante de los logs del servicio SSH.
+* **`maxretry = 3`**: Límite estricto de 3 intentos fallidos de autenticación.
+* **`findtime = 600`**: Ventana de análisis de 10 minutos. Si ocurren 3 errores en este lapso, se activa la penalización.
+* **`bantime = 3600`**: Baneo automático a nivel de firewall por 1 hora (3600 segundos). La IP atacante pierde toda visibilidad del servidor.
+
+**Validación de despliegue:** Se auditó el estado del servicio mediante `fail2ban-client status sshd`, confirmando la correcta lectura de la cárcel y la activación del monitoreo.
