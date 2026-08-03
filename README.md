@@ -92,3 +92,13 @@ Se habilitaron únicamente los puertos estrictamente necesarios para la operaci�
 * **`Port 80/tcp`**: Habilitado para el consumo público del servidor web Apache (previamente ofuscado).
 
 **Validación de despliegue:** Se auditó la matriz del firewall mediante el comando `ufw status verbose`, confirmando el encapsulamiento de la red para los protocolos IPv4 e IPv6.
+
+## 🎯 7. Auditoría y Validación (Red Team vs Blue Team)
+
+Para garantizar la eficacia de los controles implementados, se ejecutó una prueba de penetración interna simulando un ataque de fuerza bruta continuo contra el servicio SSH.
+
+### 🛡️ Resultados de la Defensa en Profundidad:
+* **Capa 1 (Criptografía SSH):** El servicio rechazó inmediatamente todos los intentos de conexión no autorizados con el código `Permission denied (publickey)`. El atacante no tuvo la oportunidad de interactuar con un prompt de contraseña, neutralizando ataques de diccionario de forma nativa.
+* **Capa 2 (IPS y Firewall):** Al auditar la cárcel con `fail2ban-client status sshd`, el contador de fallos se mantuvo en `0`. Esto valida empíricamente la efectividad de la arquitectura: el endurecimiento inicial mitigó la amenaza en la capa de autenticación, evitando la saturación de registros y ahorrando recursos de procesamiento del IPS.
+
+**Conclusión:** El servidor es resiliente ante ataques automatizados, manteniendo el perímetro limpio y garantizando el principio de confianza cero (Zero Trust) en la administración remota.
