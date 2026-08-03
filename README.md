@@ -77,3 +77,18 @@ Se creó una regla de tolerancia cero en `/etc/fail2ban/jail.d/sshd.local` para 
 * **`bantime = 3600`**: Baneo automático a nivel de firewall por 1 hora (3600 segundos). La IP atacante pierde toda visibilidad del servidor.
 
 **Validación de despliegue:** Se auditó el estado del servicio mediante `fail2ban-client status sshd`, confirmando la correcta lectura de la cárcel y la activación del monitoreo.
+
+## 🧱 6. Aislamiento de Red y Perímetro (Firewall UFW)
+
+Para reducir drásticamente la superficie de ataque del servidor, se implementó un control de tráfico a nivel de red utilizando **UFW (Uncomplicated Firewall)**, aplicando el principio fundamental de seguridad: **Denegación por Defecto (Default Deny)**.
+
+### ⚙️ Políticas de Tráfico Aplicadas
+* **`default deny incoming`**: Se bloqueó absolutamente todo el tráfico entrante de internet. Ningún escáner de red o script malicioso puede descubrir servicios ocultos.
+* **`default allow outgoing`**: Se permitió el tráfico de salida para garantizar que el servidor pueda descargar parches de seguridad y actualizaciones sin interrupciones.
+
+### 🚪 Apertura Granular de Puertos (Excepciones)
+Se habilitaron únicamente los puertos estrictamente necesarios para la operación de la institución, creando embudos de red controlados:
+* **`Port 22/tcp`**: Habilitado para la administración remota (previamente fortificado con llaves criptográficas y Fail2ban).
+* **`Port 80/tcp`**: Habilitado para el consumo público del servidor web Apache (previamente ofuscado).
+
+**Validación de despliegue:** Se auditó la matriz del firewall mediante el comando `ufw status verbose`, confirmando el encapsulamiento de la red para los protocolos IPv4 e IPv6.
