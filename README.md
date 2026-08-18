@@ -126,12 +126,55 @@ Asumiendo que un atacante pudiera comprometer un usuario estándar dentro del si
 
 ---
 
-## 🧱 10. Inspección Táctica de Paquetes en Kernel (iptables)
+🧱 10. Inspección Táctica de Paquetes en Kernel (iptables)
 
-Para ganar control directo sobre la pila TCP/IP sin depender de abstracciones de alto nivel, se realizaron operaciones avanzadas de filtrado en `iptables`, analizando la jerarquía de evaluación secuencial de cadenas.
+Para ganar control directo sobre la pila TCP/IP sin depender de abstracciones de alto nivel, se realizaron operaciones avanzadas de filtrado en iptables, analizando la jerarquía de evaluación secuencial de cadenas.
+⚙️ Manejo de Prioridades y Mitigación ICMP
 
-### ⚙️ Manejo de Prioridades y Mitigación ICMP
-* **Análisis de Jerarquía (`-I` vs `-A`):** Se comprobó experimentalmente que las reglas anexadas al final (`-A INPUT`) pueden ser anuladas por reglas previas de aceptación (`ACCEPT`).
-* **Inyección de Prioridad Máxima:** Se forzó la inserción de una regla en la posición 1 de la cadena principal:
-  ```bash
-  sudo iptables -I INPUT 1 -p icmp --icmp-type echo-request -j DROP
+Análisis de Jerarquía (-I vs -A): Se comprobó experimentalmente que las reglas anexadas al final (-A INPUT) pueden ser anuladas por reglas previas de aceptación (ACCEPT).
+Inyección de Prioridad Máxima: Se forzó la inserción de una regla en la posición 1 de la cadena principal: sudo iptables -I INPUT 1 -p icmp --icmp-type echo-request -j DROP
+Mitigación y Limpieza: Neutralización del descubrimiento perimetral mediante Ping Scans (ICMP Echo Request) y purga controlada de reglas específicas mediante sudo iptables -D INPUT 1.
+
+🕵️ 11. Auditoría Forense de Procesos y Conexiones Ocultas (lsof & kill)
+
+Cuando un servidor presenta comportamientos anómalos o sospecha de compromiso en memoria, el mapeo forense de descriptores de archivos permite identificar qué ejecutables sostienen conexiones clandestinas y neutralizarlos de raíz.
+⚙️ Detección y Contención Táctica
+
+Mapeo de Descriptores de Archivo (lsof): Se utilizó sudo lsof -p <PID> para inspeccionar en tiempo real los binarios abiertos, bibliotecas compartidas (`.so`) y sockets de red asociados a procesos sospechosos.
+Aislamiento y Mitigación de Persistencia: Identificación de procesos anómalos en ejecución y neutralización forzada e inmediata mediante el envío de señales SIGKILL (sudo kill -9 <PID>), cortando cualquier intento de persistencia o canal C2 en memoria RAM.
+
+📜 12. Auditoría de Telemetría y Cacería de Eventos (journalctl / PAM)
+
+En sistemas modernos basados en systemd, el análisis centralizado de registros binarios permite reconstruir cadenas de custodia, auditar escaladas de privilegios y detectar ataques de fuerza bruta local.
+⚙️ Procedimiento Forense y Análisis de Telemetría
+
+Auditoría de Registros Binarios: Uso de journalctl con filtros específicos de ejecutable (sudo journalctl _COMM=sudo -n 20) para auditar la traza completa de ejecuciones administrativas.
+Simulación de Intrusión / Credenciales Fallidas: Se forzó la invalidación de credenciales previas mediante sudo -k y se generaron fallos intencionales de autenticación.
+Inspección de Artefactos de Seguridad (PAM):
+* Detección de la firma de fallo: pam_unix(sudo:auth): authentication failure.
+* Identificación de actores y terminales de origen (uid=1000, tty=/dev/pts/1).
+* Registro del umbral de anomalía: 3 incorrect password attempts y retención forense del comando objetivo (/usr/bin/date).
+
+👥 13. Auditoría de Identidades, Sesiones y Conexiones Activas (loginctl / w / last)
+
+El control estricto de identidades y la inspección de sesiones activas permite verificar accesos legítimos, detectar sesiones huérfanas y mapear el árbol completo de procesos en ejecución por cada usuario autenticado.
+⚙️ Procedimiento Táctico de Auditoría
+
+Inspección en Tiempo Real (w): Auditoría inmediata de usuarios activos, terminales virtuales (TTY), tiempos de inactividad (IDLE), consumo de CPU y comandos en ejecución.
+Trazabilidad Histórica (last): Consulta a la base de datos binaria /var/log/wtmp para auditar marcas de tiempo de inicio/cierre de sesión, orígenes locales (:0 / tty7) y reinicios del sistema.
+Mapeo de Sesiones (systemd-logind / loginctl):
+* Enumeración de sesiones activas mediante loginctl list-sessions.
+* Inspección profunda de CGroup con loginctl session-status <ID>, mapeando la jerarquía completa de ejecutables (gestores de pantalla, entornos de escritorio y shells interactivas).
+
+🔍 14. Verificación Criptográfica de Integridad de Binarios (debsums)
+
+La sustitución de binarios legítimos por copias adulteradas (backdoors o troyanos) es una técnica clásica de persistencia. La verificación criptográfica contrastada con los manifiestos oficiales del gestor de paquetes permite certificar la autenticidad del sistema operativo base.
+⚙️ Procedimiento Táctico de Auditoría
+
+Despliegue del Motor de Integridad: Instalación de la utilidad oficial de Debian/Kali mediante sudo apt install debsums -y.
+Auditoría del Núcleo del Sistema (coreutils):
+* Comprobación exhaustiva de los hashes MD5 de binarios esenciales (/usr/bin/ls, /usr/bin/cat, /usr/bin/chmod, /usr/bin/chown, /usr/bin/rm, /usr/bin/cp).
+* Resultado: Estado 100% íntegro (OK), descartando adulteraciones en las herramientas fundamentales del sistema operativo.
+Auditoría del Subsistema de Autenticación (passwd):
+* Validación criptográfica de utilidades de administración de cuentas y contraseñas (/usr/bin/passwd, /usr/sbin/useradd, /usr/sbin/usermod, /usr/sbin/chpasswd).
+* Resultado: Estado 100% íntegro (OK), certificando la ausencia de puertas traseras en la captura y gestión de credenciales locales.
